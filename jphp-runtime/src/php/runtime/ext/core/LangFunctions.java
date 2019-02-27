@@ -1,5 +1,6 @@
 package php.runtime.ext.core;
 
+import java.util.Arrays;
 import php.runtime.Memory;
 import php.runtime.annotation.Reflection;
 import php.runtime.annotation.Runtime;
@@ -507,7 +508,13 @@ public class LangFunctions extends FunctionsContainer {
             return Memory.FALSE;
         }
 
-        return ArrayMemory.of(env.peekCall(0).args);
+        Memory[] args = env.peekCall(0).args;
+
+        if (args == null) {
+            return new ArrayMemory().toConstant();
+        }
+
+        return ArrayMemory.of(args);
     }
 
     public static Memory func_num_args(Environment env, TraceInfo trace) {
@@ -515,7 +522,13 @@ public class LangFunctions extends FunctionsContainer {
             return Memory.FALSE;
         }
 
-        return LongMemory.valueOf(env.peekCall(0).args.length);
+        Memory[] args = env.peekCall(0).args;
+
+        if (args == null) {
+            return Memory.CONST_INT_0;
+        }
+
+        return LongMemory.valueOf(args.length);
     }
 
     public static Memory func_get_arg(Environment env, TraceInfo trace, int argNum) {
@@ -526,6 +539,11 @@ public class LangFunctions extends FunctionsContainer {
             return Memory.FALSE;
 
         Memory[] args = env.peekCall(0).args;
+
+        if (args == null) {
+            return  Memory.FALSE;
+        }
+
         if (argNum < args.length)
             return args[argNum];
         else
@@ -933,12 +951,17 @@ public class LangFunctions extends FunctionsContainer {
         return Memory.FALSE;
     }
 
-    public static Memory flow(Environment env, Memory result, Memory... others) {
-        WrapFlow flow = WrapFlow.of(env, result).toObject(WrapFlow.class);
+
+    public static Memory flow(Environment env, Memory... others) {
+        WrapFlow flow = WrapFlow.of(env, new ArrayMemory()).toObject(WrapFlow.class);
 
         if (others != null) {
             for (Memory other : others) {
-                flow = flow.append(env, other).toObject(WrapFlow.class);
+                if (other.isTraversable()) {
+                    flow = flow.append(env, other).toObject(WrapFlow.class);
+                } else {
+                    flow = flow.append(env, ArrayMemory.of(other)).toObject(WrapFlow.class);
+                }
             }
         }
 

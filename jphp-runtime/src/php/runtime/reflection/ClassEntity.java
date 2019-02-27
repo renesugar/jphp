@@ -422,7 +422,7 @@ ClassReader classReader;
                     if (!isAbstract && method.isAbstract && implMethod.isAbstract)
                         result.add(InvalidMethod.error(InvalidMethod.Kind.NON_EXISTS, implMethod));
 
-                    if (!implMethod.equalsBySignature(method)) {
+                    if (!implMethod.isImplementableSignatureFor(method)) {
                         if (!method.isDynamicSignature() || method.isAbstractable()) {
                             boolean isWarning = true;
                             MethodEntity pr = method;
@@ -496,8 +496,23 @@ ClassReader classReader;
             this.instanceOfList.addAll(parent.instanceOfList);
             this.interfaces.putAll(parent.interfaces);
 
-            this.properties.putAll(parent.properties);
             this.staticProperties.putAll(parent.staticProperties);
+
+            for (Map.Entry<String, PropertyEntity> entry : parent.properties.entrySet()) {
+                PropertyEntity childEntity = this.properties.get(entry.getKey());
+
+                if (childEntity == null) {
+                    this.properties.put(entry.getKey(), entry.getValue());
+                } else {
+                    if (childEntity.setter == null) {
+                        childEntity.setter = entry.getValue().setter;
+                    }
+
+                    if (childEntity.getter == null) {
+                        childEntity.getter = entry.getValue().getter;
+                    }
+                }
+            }
 
             for (Map.Entry<String, ConstantEntity> entry : parent.constants.entrySet()) {
                 if (!entry.getValue().isPrivate()) {
@@ -532,8 +547,23 @@ ClassReader classReader;
             this.instanceOfList.addAll(parent.instanceOfList);
             this.interfaces.putAll(parent.interfaces);
 
-            this.properties.putAll(parent.properties);
             this.staticProperties.putAll(parent.staticProperties);
+
+            for (Map.Entry<String, PropertyEntity> entry : parent.properties.entrySet()) {
+                PropertyEntity childEntity = this.properties.get(entry.getKey());
+
+                if (childEntity == null) {
+                    this.properties.put(entry.getKey(), entry.getValue());
+                } else {
+                    if (childEntity.setter == null) {
+                        childEntity.setter = entry.getValue().setter;
+                    }
+
+                    if (childEntity.getter == null) {
+                        childEntity.getter = entry.getValue().getter;
+                    }
+                }
+            }
 
             for (Map.Entry<String, ConstantEntity> entry : parent.constants.entrySet()) {
                 if (!entry.getValue().isPrivate()) {
@@ -582,7 +612,7 @@ ClassReader classReader;
             } else {
                 implMethod.setPrototype(method);
 
-                if (/*!method.isDynamicSignature() &&*/ !implMethod.equalsBySignature(method)) { // checking dynamic for only extends
+                if (/*!method.isDynamicSignature() &&*/ !implMethod.isImplementableSignatureFor(method)) { // checking dynamic for only extends
                     result.signature.add(InvalidMethod.error(InvalidMethod.Kind.INVALID_SIGNATURE, implMethod));
                 } else if (implMethod.isStatic() && !method.isStatic()) {
                     result.signature.add(InvalidMethod.error(InvalidMethod.Kind.MUST_NON_STATIC, implMethod));
@@ -989,7 +1019,7 @@ ClassReader classReader;
             @Override
             public Memory invoke(Memory o1, Memory o2) {
                 if (oldValue != null)
-                    oldValue.assign(o1);
+                    oldValue.assign(o1.toValue());
 
                 return o1.plus(o2);
             }
@@ -1003,7 +1033,7 @@ ClassReader classReader;
             @Override
             public Memory invoke(Memory o1, Memory o2) {
                 if (oldValue != null)
-                    oldValue.assign(o1);
+                    oldValue.assign(o1.toValue());
 
                 return o1.minus(o2);
             }

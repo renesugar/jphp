@@ -78,11 +78,25 @@ class Timer
     {
     }
 
+    /**
+     * Sleep period time.
+     * @param string $period
+     */
+    static function sleep(string $period)
+    {
+    }
 
     /**
      * Call all timer tasks which scheduled.
      */
     static function cancelAll()
+    {
+    }
+
+    /**
+     * Shutdown all timers and timer system!
+     */
+    static function shutdownAll()
     {
     }
 

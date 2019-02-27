@@ -43,9 +43,6 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static php.runtime.exceptions.support.ErrorType.*;
@@ -330,7 +327,7 @@ public class Environment {
      */
     public void finalizeObjects() throws Throwable {
         cleanGcObjects();
-        for (WeakReference<IObject> el : gcObjects) {
+        for (WeakReference<IObject> el : new HashSet<>(gcObjects)) {
             IObject o = el.get();
             if (o == null)
                 continue;
@@ -368,6 +365,19 @@ public class Environment {
 
     public CallStackItem pushCall(TraceInfo trace, IObject self, Memory[] args, String function, String clazz, String staticClazz) {
         return getCallStack().push(trace, self, args, function, clazz, staticClazz);
+    }
+
+    public CallStackItem pushCallEx(TraceInfo trace, IObject self, Memory[] args, String function, ClassEntity clazz, String staticClazz) {
+        CallStackItem stackItem = new CallStackItem(trace, self, args, function, clazz.getName(), staticClazz);
+        stackItem.classEntity = clazz;
+        return getCallStack().push(stackItem);
+    }
+
+    public CallStackItem pushCallEx(TraceInfo trace, IObject self, Memory[] args, String function, ClassEntity clazz, ClassEntity staticClazz) {
+        CallStackItem stackItem = new CallStackItem(trace, self, args, function, clazz.getName(), staticClazz.getName());
+        stackItem.classEntity = clazz;
+        stackItem.staticClassEntity = staticClazz;
+        return getCallStack().push(stackItem);
     }
 
     public CallStackItem pushCall(IObject self, String method, Memory... args) {
@@ -567,6 +577,11 @@ public class Environment {
     }
 
     public ClassEntity fetchClass(String name, String nameL, boolean autoLoad) {
+        if (!name.isEmpty() && name.charAt(0) == '\\') {
+            name = name.substring(1);
+            nameL = nameL.substring(1);
+        }
+
         ClassEntity entity = classMap.get(nameL);
 
         if (entity != null) {
@@ -604,8 +619,13 @@ public class Environment {
 
     public FunctionEntity fetchFunction(String name, String nameL) {
         FunctionEntity r = functionMap.get(nameL);
+
         if (r == null) {
             r = scope.findUserFunction(name);
+        }
+
+        if (r == null && !name.isEmpty() && name.charAt(0) == '\\') {
+            return fetchFunction(name.substring(1), nameL.substring(1));
         }
 
         return r;
@@ -1615,6 +1635,18 @@ public class Environment {
             throw new DieException(Memory.NULL);
     }
 
+    public Memory getObjectProperty(IObject object, String propertyName) throws Throwable {
+        if (object == null) {
+            return Memory.NULL;
+        }
+
+        return object.getReflection().getProperty(this, this.trace(), object, propertyName, null, -1);
+    }
+
+    public Memory setObjectProperty(IObject object, String propertyName, Memory value) throws Throwable {
+        return object.getReflection().setProperty(this, this.trace(), object, propertyName, value, null, null, -1);
+    }
+
     public Memory invokeMethod(TraceInfo trace, IObject object, String name, Memory... args) throws Throwable {
         return ObjectInvokeHelper.invokeMethod(new ObjectMemory(object), name, name.toLowerCase(), this, trace, args);
     }
@@ -1642,6 +1674,14 @@ public class Environment {
 
     public Memory invokeMethod(Memory object, String name, Memory... args) throws Throwable {
         return ObjectInvokeHelper.invokeMethod(object, name, name.toLowerCase(), this, trace(), args);
+    }
+
+    public void assignProperty(IObject object, String property, Memory value) throws Throwable {
+        ObjectInvokeHelper.assignProperty(ObjectMemory.valueOf(object), value, property, this, trace(), null, 0);
+    }
+
+    public void assignProperty(Memory object, String property, Memory value) throws Throwable {
+        ObjectInvokeHelper.assignProperty(object, value, property, this, trace(), null, 0);
     }
 
     public String getLateStatic() {
@@ -1705,9 +1745,11 @@ public class Environment {
     }
 
     public ClassEntity getLastClassOnStack() {
-        int N = getCallStackTop();
+        CallStack callStack = getCallStack();
+        int N = callStack.getTop();
+
         for (int i = 0; i < N; i++) {
-            CallStackItem item = peekCall(i);
+            CallStackItem item = callStack.peekCall(i);
             if (item != null && item.clazz != null) {
                 if (item.classEntity != null) {
                     if (item.object instanceof Closure) {
@@ -1721,12 +1763,16 @@ public class Environment {
 
                     return item.classEntity;
                 }
+
                 ClassEntity e = item.classEntity = fetchClass(item.clazz, false);
-                if (e == null)
+
+                if (e == null) {
                     throw new IllegalStateException("Cannot find '" + item.clazz + "' in the current environment");
+                }
                 return e;
             }
         }
+
         return null;
     }
 

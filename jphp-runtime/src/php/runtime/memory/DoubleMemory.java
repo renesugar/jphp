@@ -24,6 +24,10 @@ public class DoubleMemory extends Memory {
     }
 
     public static Memory valueOf(Number number) {
+        if (number == null) {
+            return NULL;
+        }
+        
         return number instanceof Double || number instanceof Float
                 ? new DoubleMemory(number.doubleValue())
                 : LongMemory.valueOf(number.longValue());
@@ -332,5 +336,60 @@ public class DoubleMemory extends Memory {
     @Override
     public byte[] getBinaryBytes(Charset charset) {
         return MemoryStringUtils.getBinaryBytes(this);
+    }
+
+    @Override
+    public boolean isArray() {
+        return false;
+    }
+
+    @Override
+    public Memory toValue() {
+        return this;
+    }
+
+    @Override
+    public Memory toImmutable() {
+        return this;
+    }
+
+    @Override
+    public boolean isNull() {
+        return false;
+    }
+
+    @Override
+    public boolean isUndefined() {
+        return false;
+    }
+
+    @Override
+    public boolean isString() {
+        return false;
+    }
+
+    @Override
+    public boolean isTraversable() {
+        return false;
+    }
+
+    @Override
+    public boolean isReference() {
+        return false;
+    }
+
+    @Override
+    public boolean isObject() {
+        return false;
+    }
+
+    @Override
+    public boolean isClosure() {
+        return false;
+    }
+
+    @Override
+    public boolean isNumber() {
+        return true;
     }
 }

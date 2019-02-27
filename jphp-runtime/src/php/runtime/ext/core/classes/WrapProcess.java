@@ -12,10 +12,10 @@ import php.runtime.memory.LongMemory;
 import php.runtime.memory.ObjectMemory;
 import php.runtime.reflection.ClassEntity;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Map;
 
 import static php.runtime.annotation.Reflection.*;
 
@@ -59,11 +59,78 @@ public class WrapProcess extends BaseObject {
         return Memory.NULL;
     }
 
-    protected Process getProcess() {
+    public Process getProcess() {
         if (process == null)
             throw new IllegalStateException("Process is not started, use the start() method to initialize it");
 
         return process;
+    }
+
+    public ProcessBuilder getProcessBuilder() {
+        return processBuilder;
+    }
+
+    @Signature
+    public WrapProcess inheritIO() {
+        if (processBuilder == null)
+            throw new IllegalStateException("Process already started and it cannot set inheritIO().");
+
+        processBuilder.inheritIO();
+        return this;
+    }
+
+    @Signature
+    public WrapProcess redirectOutputToInherit() {
+        processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+        return this;
+    }
+
+    @Signature
+    public WrapProcess redirectOutputToPipe() {
+        processBuilder.redirectOutput(ProcessBuilder.Redirect.PIPE);
+        return this;
+    }
+
+    @Signature
+    public WrapProcess redirectOutputToFile(File file) {
+        processBuilder.redirectOutput(file);
+        return this;
+    }
+
+    @Signature
+    public WrapProcess redirectErrorToInherit() {
+        processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+        return this;
+    }
+
+    @Signature
+    public WrapProcess redirectErrorToPipe() {
+        processBuilder.redirectError(ProcessBuilder.Redirect.PIPE);
+        return this;
+    }
+
+    @Signature
+    public WrapProcess redirectErrorToFile(File file) {
+        processBuilder.redirectError(file);
+        return this;
+    }
+
+    @Signature
+    public WrapProcess redirectInputFromInherit() {
+        processBuilder.redirectInput(ProcessBuilder.Redirect.INHERIT);
+        return this;
+    }
+
+    @Signature
+    public WrapProcess redirectInputFromPipe() {
+        processBuilder.redirectInput(ProcessBuilder.Redirect.PIPE);
+        return this;
+    }
+
+    @Signature
+    public WrapProcess redirectInputFromFile(File file) {
+        processBuilder.redirectInput(file);
+        return this;
     }
 
     @Signature
@@ -125,5 +192,15 @@ public class WrapProcess extends BaseObject {
         } else {
             getProcess().destroy();
         }
+    }
+
+    @Signature
+    public boolean isAlive() {
+        return getProcess().isAlive();
+    }
+
+    @Signature
+    public int waitFor() throws InterruptedException {
+        return getProcess().waitFor();
     }
 }

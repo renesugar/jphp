@@ -6,12 +6,15 @@ sourceSets {
 
 dependencies {
     compile project(':jphp-core')
-    compile project(':jphp-zend-ext')
+    compile project(':jphp-runtime')
+    compile project(':exts:jphp-zend-ext')
+    compile project(':exts:jphp-json-ext')
 }
 
 mainClassName = 'php.runtime.launcher.Launcher'
 
 task bench(dependsOn: run) {
+
 }
 
 task benchServer(dependsOn: run.dependsOn) {

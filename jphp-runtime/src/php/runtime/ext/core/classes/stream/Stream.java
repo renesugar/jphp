@@ -125,6 +125,11 @@ abstract public class Stream extends BaseObject implements Resource {
         }
     }
 
+    @Signature
+    final public Memory readAll(Environment env, Memory... args) throws Throwable {
+        return env.invokeMethod(this, "readFully");
+    }
+
     public static Stream create(Environment env, String path, String mode) throws Throwable {
         return of(env, StringMemory.valueOf(path), StringMemory.valueOf(mode)).toObject(Stream.class);
     }
@@ -174,7 +179,7 @@ abstract public class Stream extends BaseObject implements Resource {
             }
 
             return Memory.TRUE;
-        } catch (WrapIOException e) {
+        } catch (WrapIOException|IOException e) {
             return Memory.FALSE;
         } finally {
             if (stream != null) {

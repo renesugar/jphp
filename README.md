@@ -1,14 +1,15 @@
 JPHP - an implementation of PHP
 ===============================
 
-[![Build Status](https://travis-ci.org/jphp-compiler/jphp.svg?branch=master)](https://travis-ci.org/jphp-compiler/jphp)  [![Download](https://jitpack.io/v/org.develnext/jphp.svg)](https://jitpack.io/#org.develnext/jphp) [![Documentation Status](https://readthedocs.org/projects/jphp-docs/badge/?version=latest)](https://readthedocs.org/projects/jphp-docs/?badge=latest)
+[![Build Status](https://travis-ci.org/jphp-group/jphp.svg?branch=master)](https://travis-ci.org/jphp-group/jphp)
 
-JPHP is a new implementation for PHP which uses the Java VM. It supports many features of the PHP language (7.0+).
+JPHP is a new implementation for PHP which uses the Java VM. It supports many features of the PHP language (7.1+).
 
 How does it work? JPHP is a compiler like `javac`, it compiles php sources to JVM bytecode and then
 can execute the result on the Java VM.
 
-- Official Site: **[j-php.net](http://j-php.net/)**
+- Official Site: **[jphp.develnext.org](http://jphp.develnext.org/)**
+- [Awesome JPHP](https://github.com/jphp-group/awesome-jphp)
 
 ### In Production
 
@@ -29,46 +30,50 @@ Our project started in October 2013. There were a few reasons for that:
 ### Features
 
 + PHP 5.6+ (and many language features from PHP 7.0 and 7.1).
-+ JIT (~2.5 faster PHP 5.6, ~1.1 faster PHP 7), Optimizer - [Performance benchmarks](http://blog.j-php.net/archives/34)
++ JIT (~2.5x faster PHP 5.6, ~1.1x faster PHP 7.0, ~1.5x slower PHP 7.1).
 + Using java libraries and classes in PHP code.
 + Unicode for strings (UTF-16, like in Java)
-+ Threading, Sockets, Environment architecture (like sandbox objects in the runkit zend extension).
-+ GUI (~~Swing~~ or [JavaFX](https://github.com/jphp-compiler/develnext))
++ [Threading](jphp-runtime/api-docs/classes/php/lang/Thread.md), [Sockets](jphp-runtime/api-docs/classes/php/net/Socket.md), [Environment](jphp-runtime/api-docs/classes/php/lang/Environment.md) architecture (like sandbox objects in the runkit zend extension).
++ GUI ([JavaFX](exts/jphp-gui-ext/api-docs) or [SWT](https://github.com/jphp-group/jphp-swt-ext))
 + Embedded cache system for classes and functions
 + Optional Hot Reloading for classes and functions
-+ ~~Ability to use on **Android** OS~~ (not yet)
++ Ability to use on **Android** OS : [jphp-android](https://github.com/VenityStudio/jphp-android)
 
 **What JPHP supports from PHP 7.0, 7.1?**
-+ Context Sensitive Lexer.
-+ Fix list() behavior inconsistency.
-+ Throwable Interface.
-+ Group Use Declarations.
-+ Scalar and Optional Type Hinting.
-+ Return Type Hinting.
-+ Void and Iterable Type Hinting.
-+ Uniform Variable Syntax (partly).
-+ Null Coalesce Operator `??`.
-+ Multiple catch syntax.
-+ Short list syntax.
-+ List Keys.
-+ Class constant visibility modifiers.
-+ Spaceship Operator `<=>`.
-+ Generator Delegation `yield from`.
-+ Generator Return Expressions.
-+ `intdiv()` function.
++ All features except anonymous classes.
+
+### Own Extensions
+- [Standard Library](jphp-runtime/api-docs) - own runtime standard library
+- [Http Server](exts/jphp-httpserver-ext) (+Web Sockets +Multithread)
+- GUI ([JavaFX](exts/jphp-gui-ext/api-docs) or [SWT](https://github.com/jphp-compiler/jphp-swt-ext))
+- [Git](exts/jphp-git-ext/api-docs) (based on JGit)
+- [JSoup](exts/jphp-jsoup-ext/api-docs) - for parsing html in jQuery style.
+- [SQL](exts/jphp-sql-ext/api-docs) (supports [MySQL](exts/jphp-sql-ext/api-docs), [PostgreSQL](exts/jphp-pgsql-ext/api-docs), [SQLite](exts/jphp-sqlite-ext/api-docs), [Firebird](exts/jphp-firebirdsql-ext/api-docs)).
+- [SSH](exts/jphp-ssh-ext/api-docs) - for working with the ssh protocol.
+- [Yaml](exts/jphp-yaml-ext/) - for parsing and formating yaml.
+- [Compress](exts/jphp-compress-ext) - for working with tar, gz, bz2, lz4, zip archives.
+- [HttpClient](exts/jphp-httpclient-ext/api-docs) - http client with promises.
+- [SemVer](exts/jphp-semver-ext/api-docs) - for parsing versions in the SemVer standard.
+- [Mail](exts/jphp-mail-ext/api-docs) - for sending emails via SMTP servers.
+- [MongoDB](exts/jphp-mongo-ext/api-docs) - a driver for Mongo DB 3.0+.
 
 ### Documentation
 
-- Wiki here: [read](http://j-php.net/wiki/)
-- You can find the latest api documentation here: http://jphp-docs.readthedocs.org/
-- To contribute to the api documentation, you can fork the `docs` project: https://github.com/jphp-compiler/docs
-
+- You can find the latest api documentation here: [jphp-runtime/api-docs](jphp-runtime/api-docs)
+- Wiki here: [read](http://jphp.develnext.org/wiki/)
 
 ### Getting started (Hello World)
 
-[http://j-php.net/wiki/Getting-started](http://j-php.net/wiki/Getting-started)
+1. Install jphp package manager (jppm), [how to install](packager/#0-how-to-install-jppm).
+2. Init new project (jppm package) with default values:
+```bash
+jppm init
+```
+3. Run in console `jppm start`.
 
-### Hot to run benchmarks?
+You will see `Hello World` in your console, the sources of this program will be in `src/index.php`.
+
+### How to run benchmarks?
 
 ```
 // via jphp

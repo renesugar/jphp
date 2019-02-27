@@ -19,11 +19,15 @@ import php.runtime.memory.*;
 import php.runtime.reflection.ClassEntity;
 
 import java.io.*;
+import java.nio.file.FileSystems;
+import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.CRC32;
 
 @Name("php\\lib\\fs")
 public class FsUtils extends BaseObject {
@@ -186,6 +190,11 @@ public class FsUtils extends BaseObject {
     }
 
     @Signature
+    public static String relativize(String path, String base) {
+        return new File(base).toURI().relativize(new File(path).toURI()).getPath();
+    }
+
+    @Signature
     public static long size(String path) {
         return new File(path).length();
     }
@@ -275,8 +284,13 @@ public class FsUtils extends BaseObject {
     }
 
     @Signature
-    public static boolean delete(String path) {
-        return new File(path).delete();
+    public static boolean delete(Environment env, String path) {
+        File file = new File(path);
+        if (file.isDirectory()) {
+            clean(env, path);
+        }
+
+        return file.delete();
     }
 
     @Signature
@@ -389,6 +403,24 @@ public class FsUtils extends BaseObject {
         outputStream.flush();
 
         return nread;
+    }
+
+    @Signature
+    public static Memory crc32(InputStream is) throws NoSuchAlgorithmException {
+        CRC32 crcMaker = new CRC32();
+
+        byte[] buffer = new byte[1024];
+        int len;
+
+        try {
+            while ((len = is.read(buffer)) > 0) {
+                crcMaker.update(buffer, 0, len);
+            }
+
+            return LongMemory.valueOf(crcMaker.getValue());
+        } catch (IOException e) {
+            return Memory.NULL;
+        }
     }
 
     @Signature
@@ -575,7 +607,7 @@ public class FsUtils extends BaseObject {
     private static Memory scanFilter(final Environment env, final ArrayMemory props) {
         final FilterProperties filterProperties = props.toBean(env, FilterProperties.class);
 
-        return RunnableInvoker.make(env, new Callback<Memory, Memory[]>() {
+        return RunnableInvoker.create(env, new Callback<Memory, Memory[]>() {
             @Override
             public Memory call(Memory[] args) {
                 if (args == null || args.length == 0) {
@@ -680,11 +712,11 @@ public class FsUtils extends BaseObject {
                               @Nullable Memory filter, int maxDepth, boolean filesIsFirst)  {
         final ArrayMemory result = new ArrayMemory();
 
-        if (filter.isArray()) {
+        if (filter != null && filter.isArray()) {
             filter = scanFilter(env, filter.toValue(ArrayMemory.class));
         }
 
-        final Invoker progress = Invoker.create(env, filter);
+        final Invoker progress = filter != null ? Invoker.create(env, filter) : null;
 
         scan(path, new ScanProgressHandler(filesIsFirst) {
             @Override
@@ -736,7 +768,7 @@ public class FsUtils extends BaseObject {
                 Memory value = ObjectMemory.valueOf(new FileObject(env, file));
 
                 if (checker == null || checker.callAny(file, depth).toBoolean()) {
-                    if (delete(file.getPath())) {
+                    if (delete(env, file.getPath())) {
                         success.add(value);
                     } else {
                         error.add(value);
@@ -761,6 +793,12 @@ public class FsUtils extends BaseObject {
     @Signature
     public static boolean move(String path, String newPath) {
         return new File(path).renameTo(new File(newPath));
+    }
+
+    @Signature
+    public static boolean match(String path, String pattern) {
+        PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher(pattern);
+        return pathMatcher.matches(Paths.get(path));
     }
 
     public abstract static class ScanProgressHandler {

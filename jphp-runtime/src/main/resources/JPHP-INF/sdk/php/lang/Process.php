@@ -36,7 +36,7 @@ class Process
      * @return Process
      * @throws IllegalStateException
      */
-    public function startAndWait() { return new Process([]); }
+    public function startAndWait(): Process { }
 
     /**
      * Returns the exit value for the subprocess.
@@ -84,4 +84,107 @@ class Process
      * @throws IllegalStateException
      */
     public function getError() { return Stream::of(''); }
+
+    /**
+     * @return Process
+     * @throws IllegalArgumentException
+     */
+    public function inheritIO(): Process
+    {
+    }
+
+    /**
+     * @param $file
+     * @return Process
+     * @throws IllegalArgumentException
+     */
+    public function redirectOutputToFile($file): Process
+    {
+    }
+
+    /**
+     * @return Process
+     * @throws IllegalArgumentException
+     */
+    public function redirectOutputToInherit(): Process
+    {
+    }
+
+    /**
+     * @return Process
+     * @throws IllegalArgumentException
+     */
+    public function redirectOutputToPipe(): Process
+    {
+    }
+
+    /**
+     * @param $file
+     * @return Process
+     * @throws IllegalArgumentException
+     */
+    public function redirectErrorToFile($file): Process
+    {
+    }
+
+    /**
+     * @return Process
+     * @throws IllegalArgumentException
+     */
+    public function redirectErrorToInherit(): Process
+    {
+    }
+
+    /**
+     * @return Process
+     * @throws IllegalArgumentException
+     */
+    public function redirectErrorToPipe(): Process
+    {
+    }
+
+    /**
+     * @param $file
+     * @return Process
+     * @throws IllegalArgumentException
+     */
+    public function redirectInputFromFile($file): Process
+    {
+    }
+
+    /**
+     * @return Process
+     * @throws IllegalArgumentException
+     */
+    public function redirectInputFromInherit(): Process
+    {
+    }
+
+    /**
+     * @return Process
+     * @throws IllegalArgumentException
+     */
+    public function redirectInputFromPipe(): Process
+    {
+    }
+
+
+    /**
+     * Tests whether the subprocess represented by this {@code Process} is
+     * alive.
+     *
+     * @return bool
+     */
+    public function isAlive(): bool
+    {
+    }
+
+    /**
+     * Causes the current thread to wait, if necessary, until the
+     * process represented by this {@code Process} object has
+     * terminated.
+     *
+     * @return int
+     */
+    public function waitFor(): int { }
 }

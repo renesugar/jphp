@@ -519,6 +519,26 @@ public class ArrayMemory extends Memory implements Iterable<ReferenceMemory> {
         return result.getB();
     }
 
+    public ReferenceMemory put(Object key, String value) {
+        return put(key, StringMemory.valueOf(value));
+    }
+
+    public ReferenceMemory put(Object key, long value) {
+        return put(key, LongMemory.valueOf(value));
+    }
+
+    public ReferenceMemory put(Object key, boolean value) {
+        return put(key, TrueMemory.valueOf(value));
+    }
+
+    public ReferenceMemory put(Object key, double value) {
+        return put(key, DoubleMemory.valueOf(value));
+    }
+
+    public ReferenceMemory put(Object key, IObject value) {
+        return put(key, ObjectMemory.valueOf(value));
+    }
+
     public ReferenceMemory put(Object key, Memory value) {
         if (key instanceof LongMemory) {
             ReferenceMemory mem = new ReferenceMemory(value);
@@ -1444,12 +1464,19 @@ public class ArrayMemory extends Memory implements Iterable<ReferenceMemory> {
     public ForeachIterator getCurrentIterator() {
         if (foreachIterator == null) {
             foreachIterator = foreachIterator(false, true);
+
+            foreachIterator.next();
+            //foreachIterator.prev();
         }
 
         return foreachIterator;
     }
 
-    protected void reset() {
+    public boolean hasCurrentIterator() {
+        return  (foreachIterator != null);
+    }
+
+    public void reset() {
         foreachIterator = null;
     }
 
@@ -1457,12 +1484,10 @@ public class ArrayMemory extends Memory implements Iterable<ReferenceMemory> {
         reset();
 
         ForeachIterator iterator = getCurrentIterator();
-        if (size == 0)
+        if (size == 0) {
             return FALSE;
-        else {
-            iterator.next();
+        } else {
             Memory tmp = iterator.getValue();
-            iterator.prev();
             return tmp;
         }
     }
@@ -1842,6 +1867,33 @@ public class ArrayMemory extends Memory implements Iterable<ReferenceMemory> {
         return result;
     }
 
+    public static ArrayMemory ofAny(Environment env, Object... args) {
+        if (args != null && args.length > 0) {
+            Memory[] passed = new Memory[args.length];
+
+            for (int i = 0; i < passed.length; i++) {
+                if (args[i] == null) {
+                    passed[i] = Memory.NULL;
+                    continue;
+                }
+
+                MemoryOperation operation = MemoryOperation.get(
+                        args[i].getClass(), args[i].getClass().getGenericSuperclass()
+                );
+
+                if (operation == null) {
+                    throw new CriticalException("Unsupported bind type - " + args[i].getClass().toString());
+                }
+
+                passed[i] = operation.unconvertNoThow(env, env.trace(), args[i]);
+            }
+
+            return of(passed);
+        } else {
+            return new ArrayMemory();
+        }
+    }
+
     public static ArrayMemory ofCollection(Collection<Memory> list) {
         ArrayMemory result = new ArrayMemory();
 
@@ -2066,9 +2118,15 @@ public class ArrayMemory extends Memory implements Iterable<ReferenceMemory> {
 
     public <T> T toBean(Environment env, TraceInfo trace, Class<T> beanClass) {
         try {
-            Constructor<T> constructor = beanClass.getConstructor();
+            T instance;
 
-            T instance = constructor.newInstance();
+            try {
+                Constructor<T> beanClassConstructor = beanClass.getConstructor(ArrayMemory.class);
+                instance = beanClassConstructor.newInstance(this);
+            } catch (NoSuchMethodException e) {
+                Constructor<T> constructor = beanClass.getConstructor();
+                instance = constructor.newInstance();
+            }
 
             return toBean(env, trace, instance);
         } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {

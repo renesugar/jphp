@@ -4,6 +4,7 @@ import php.runtime.Memory;
 import php.runtime.annotation.Reflection;
 import php.runtime.common.Callback;
 import php.runtime.common.CallbackW;
+import php.runtime.common.HintType;
 import php.runtime.common.Messages;
 import php.runtime.env.Context;
 import php.runtime.env.Environment;
@@ -14,13 +15,11 @@ import php.runtime.ext.support.Extension;
 import php.runtime.ext.support.compile.CompileFunction;
 import php.runtime.lang.IObject;
 import php.runtime.memory.support.MemoryOperation;
+import php.runtime.memory.support.MemoryUtils;
 import php.runtime.reflection.support.ReflectionUtils;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.Arrays;
 
 public class CompileMethodEntity extends MethodEntity {
@@ -80,23 +79,60 @@ public class CompileMethodEntity extends MethodEntity {
         ParameterEntity[] parameters = new ParameterEntity[method.getParameterTypes().length];
         Annotation[][] annotations   = method.getParameterAnnotations();
 
-        int i = 0;
-        for (Class<?> el : method.getParameterTypes()) {
-            if (el == Environment.class || el == TraceInfo.class) {
+        int i = 0, k = 0;
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        int paramCount = parameterTypes.length;
+
+        for (int x = 0; x < paramCount; x++) {
+        //for (Parameter el : method.getParameters()) { // FIX for Android!
+            Class<?> elType = parameterTypes[x];
+
+            if (elType == Environment.class || elType == TraceInfo.class) {
+                k++;
                 continue;
             }
 
             ParameterEntity param = new ParameterEntity(context);
-            param.setName("arg" + i);
+            param.setName(/*el.isNamePresent() ? el.getName() : */"arg" + i); // Fix for Android!
             param.setTrace(TraceInfo.UNKNOWN);
 
-            Annotation[] argAnnotations = annotations[i];
+            Annotation[] argAnnotations = annotations[k];
 
             if (ReflectionUtils.getAnnotation(argAnnotations, Reflection.Nullable.class) != null) {
                 param.setNullable(true);
             }
 
+            Reflection.Arg arg = ReflectionUtils.getAnnotation(argAnnotations, Reflection.Arg.class);
+            if (arg != null) {
+                if (!arg.value().isEmpty()) {
+                    param.setName(arg.value());
+                }
+
+                param.setType(arg.type());
+                param.setReference(arg.reference());
+
+                if (arg.nativeType() != IObject.class) {
+                    param.setTypeNativeClass(arg.nativeType());
+                }
+
+                if (!arg.typeClass().isEmpty()) {
+                    param.setTypeClass(arg.typeClass());
+                }
+
+                if (arg.optional().exists()
+                        || !arg.optional().value().isEmpty()
+                        || (arg.type() != HintType.STRING && !arg.optional().value().isEmpty())){
+                    param.setDefaultValue(MemoryUtils.valueOf(arg.optional().value(), arg.optional().type()));
+                }
+            }
+
+            Reflection.Optional optAnn = ReflectionUtils.getAnnotation(argAnnotations, Reflection.Optional.class);
+            if (optAnn != null) {
+                param.setDefaultValue(MemoryUtils.valueOf(optAnn.value(), optAnn.type()));
+            }
+
             parameters[i++] = param;
+            k++;
         }
 
         if (i < parameters.length) {
@@ -317,50 +353,53 @@ public class CompileMethodEntity extends MethodEntity {
                 argumentOperations = new MemoryOperation[parameterTypes.length];
 
                 MemoryOperation op;
-                for (int i = 0; i < argumentOperations.length; i++) {
+
+                for (int i = 0, k = 0; i < argumentOperations.length; i++) {
                     Class<?> parameterType = parameterTypes[i];
-                    Type genericTypes = method.getGenericParameterTypes()[i];
 
-                    op = MemoryOperation.get(parameterType, genericTypes);
+                        Type genericTypes = method.getGenericParameterTypes()[i];
 
-                    argumentOperations[i] = op;
+                        op = MemoryOperation.get(parameterType, genericTypes);
 
-                    if (op != null) {
-                        if (i <= parameters.length - 1) {
-                            op.applyTypeHinting(parameters[i]);
-                        }
-                    } else {
-                        if (parameterType == Environment.class) {
-                            argumentOperations[i] = new InjectMemoryOperation() {
-                                @Override
-                                public Object convert(Environment env, TraceInfo trace, Memory arg) throws Throwable {
-                                    return env;
-                                }
-                            };
-                        } else if (parameterType == TraceInfo.class) {
-                            argumentOperations[i] = new InjectMemoryOperation() {
-                                @Override
-                                public Object convert(Environment env, TraceInfo trace, Memory arg) throws Throwable {
-                                    return trace;
-                                }
-                            };
-                        } else {
-                            if (unknownTypeFetcher != null) {
-                                op = unknownTypeFetcher.call(parameterType, genericTypes);
-                                argumentOperations[i] = op;
+                        argumentOperations[i] = op;
 
-                                if (op != null) {
-                                    if (i <= parameters.length - 1) {
-                                        op.applyTypeHinting(parameters[i]);
-                                    }
-
-                                    continue;
-                                }
+                        if (op != null) {
+                            if (k <= parameters.length - 1) {
+                                op.applyTypeHinting(parameters[k]);
                             }
+                            k++;
+                        } else {
+                            if (parameterType == Environment.class) {
+                                argumentOperations[i] = new InjectMemoryOperation() {
+                                    @Override
+                                    public Object convert(Environment env, TraceInfo trace, Memory arg) throws Throwable {
+                                        return env;
+                                    }
+                                };
+                            } else if (parameterType == TraceInfo.class) {
+                                argumentOperations[i] = new InjectMemoryOperation() {
+                                    @Override
+                                    public Object convert(Environment env, TraceInfo trace, Memory arg) throws Throwable {
+                                        return trace;
+                                    }
+                                };
+                            } else {
+                                if (unknownTypeFetcher != null) {
+                                    op = unknownTypeFetcher.call(parameterType, genericTypes);
+                                    argumentOperations[i] = op;
 
-                            throw new CriticalException("Unsupported type for binding - " + parameterType);
+                                    if (op != null) {
+                                        if (k <= parameters.length - 1) {
+                                            op.applyTypeHinting(parameters[k]);
+                                        }
+                                        k++;
+                                        continue;
+                                    }
+                                }
+
+                                throw new CriticalException("Unsupported type for binding - " + parameterType);
+                            }
                         }
-                    }
                 }
             }
         }

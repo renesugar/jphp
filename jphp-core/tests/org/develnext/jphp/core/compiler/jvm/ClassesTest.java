@@ -132,4 +132,14 @@ public class ClassesTest extends JvmCompilerCase {
         check("classes/bug127.php");
         check("classes/bug130.php");
     }
+
+    @Test
+    public void testBug264() {
+        check("classes/bug264.php");
+    }
+
+    @Test
+    public void testBug271() {
+        check("classes/bug271.php");
+    }
 }

@@ -1,5 +1,7 @@
 package php.runtime.ext.core.classes.stream;
 
+import java.io.Reader;
+import java.io.Writer;
 import php.runtime.Memory;
 import php.runtime.env.Environment;
 import php.runtime.memory.BinaryMemory;
@@ -27,6 +29,28 @@ public class MiscStream extends Stream {
     public MiscStream(Environment env, MemoryStream memoryStream) {
         super(env);
         this.memoryStream = memoryStream;
+    }
+
+    public MiscStream(Environment env, Reader reader) {
+        super(env);
+
+        this.inputStream = new InputStream() {
+            @Override
+            public int read() throws IOException {
+                return reader.read();
+            }
+        };
+    }
+
+    public MiscStream(Environment env, Writer writer) {
+        super(env);
+
+        this.outputStream = new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                writer.write(b);
+            }
+        };
     }
 
     public MiscStream(Environment env, InputStream inputStream) {
@@ -70,7 +94,7 @@ public class MiscStream extends Stream {
 
     @Signature({@Arg("value"), @Arg(value = "length", optional = @Optional("NULL"))})
     public Memory write(Environment env, Memory... args) throws IOException {
-        int len = args[1].toInteger();
+            int len = args[1].toInteger();
         byte[] bytes = args[0].getBinaryBytes(env.getDefaultCharset());
 
         eof = false;
@@ -139,8 +163,9 @@ public class MiscStream extends Stream {
             }
 
             return new BinaryMemory(tmp.toByteArray());
+        } else {
+            throw new IOException("Cannot read from output stream");
         }
-        return Memory.NULL;
     }
 
     @Signature

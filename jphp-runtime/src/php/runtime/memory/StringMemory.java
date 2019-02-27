@@ -549,8 +549,12 @@ public class StringMemory extends Memory {
                 _index = index.toInteger();
         }
 
-        if (_index < toString().length() && _index >= 0)
-            return getChar(toString().charAt(_index));
+        String toString = toString();
+
+        if (_index < toString.length() && _index >= 0)
+            return getChar(toString.charAt(_index));
+        else if (_index < 0 && Math.abs(_index) <= toString.length())
+            return getChar(toString.charAt(toString.length() + _index));
         else
             return CONST_EMPTY_STRING;
     }
@@ -561,6 +565,8 @@ public class StringMemory extends Memory {
         String string = toString();
         if (_index >= 0 && _index < string.length())
             return getChar(string.charAt(_index));
+        else if (_index < 0 && Math.abs(_index) <= string.length())
+            return getChar(string.charAt(string.length() + _index));
         else
             return CONST_EMPTY_STRING;
     }
@@ -571,6 +577,8 @@ public class StringMemory extends Memory {
         String string = toString();
         if (_index >= 0 && _index < string.length())
             return getChar(string.charAt(_index));
+        else if (_index < 0 && Math.abs(_index) <= string.length())
+            return getChar(string.charAt(string.length() + _index));
         else
             return CONST_EMPTY_STRING;
     }
@@ -581,6 +589,8 @@ public class StringMemory extends Memory {
         String string = toString();
         if (_index >= 0 && _index < string.length())
             return getChar(string.charAt(_index));
+        else if (_index < 0 && Math.abs(_index) <= string.length())
+            return getChar(string.charAt(string.length() + _index));
         else
             return CONST_EMPTY_STRING;
     }
@@ -596,6 +606,8 @@ public class StringMemory extends Memory {
         String string = toString();
         if (_index >= 0 && _index < string.length())
             return getChar(string.charAt(_index));
+        else if (_index < 0 && Math.abs(_index) <= string.length())
+            return getChar(string.charAt(string.length() + _index));
         else
             return CONST_EMPTY_STRING;
     }
@@ -634,6 +646,62 @@ public class StringMemory extends Memory {
     @Override
     public int hashCode() {
         return toString() == null ? 0 : toString().hashCode();
+    }
+
+    @Override
+    public boolean isArray() {
+        return false;
+    }
+
+    @Override
+    public Memory toValue() {
+        return this;
+    }
+
+    @Override
+    public Memory toImmutable() {
+        return this;
+    }
+
+
+    @Override
+    public boolean isNull() {
+        return false;
+    }
+
+    @Override
+    public boolean isUndefined() {
+        return false;
+    }
+
+    @Override
+    public boolean isString() {
+        return true;
+    }
+
+    @Override
+    public boolean isTraversable() {
+        return false;
+    }
+
+    @Override
+    public boolean isReference() {
+        return false;
+    }
+
+    @Override
+    public boolean isObject() {
+        return false;
+    }
+
+    @Override
+    public boolean isClosure() {
+        return false;
+    }
+
+    @Override
+    public boolean isNumber() {
+        return false;
     }
 
     protected static StringMemory getChar(char ch) {

@@ -24,5 +24,9 @@ out/
 /.gradle/
 build/
 
-gradle.properties
 secret.asc
+
+package.github.yml
+package.hub.yml
+
+*.hprof

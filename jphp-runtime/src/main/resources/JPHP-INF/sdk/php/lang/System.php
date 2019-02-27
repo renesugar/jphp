@@ -1,5 +1,6 @@
 <?php
 namespace php\lang;
+use php\io\Stream;
 
 /**
  * Class System
@@ -57,6 +58,111 @@ final class System
      * @param array $properties
      */
     public static function setProperties(array $properties)
+    {
+    }
+
+    /**
+     * @return Stream
+     */
+    public static function in(): Stream
+    {
+    }
+
+    /**
+     * @return Stream
+     */
+    public static function out(): Stream
+    {
+    }
+
+    /**
+     * @return Stream
+     */
+    public static function err(): Stream
+    {
+    }
+
+    /**
+     * Set stdin stream.
+     * @param null|Stream $in
+     */
+    public static function setIn(?Stream $in)
+    {
+    }
+
+    /**
+     * Set stdout stream.
+     * @param null|Stream $out
+     * @param string|null $encoding
+     */
+    public static function setOut(?Stream $out, string $encoding = null)
+    {
+    }
+
+    /**
+     * Set stderr stream.
+     * @param null|Stream $err
+     * @param string|null $encoding
+     */
+    public static function setErr(?Stream $err, string $encoding = null)
+    {
+    }
+
+    /**
+     * Returns temp directory that has write access.
+     * @return string
+     */
+    public static function tempDirectory(): string
+    {
+    }
+
+    /**
+     * @return string
+     */
+    public static function userDirectory(): string
+    {
+    }
+
+    /**
+     * Returns user.home directory.
+     * @return string
+     */
+    public static function userHome(): string
+    {
+    }
+
+    /**
+     * Returns os user name which logged.
+     * @return string
+     */
+    public static function userName(): string
+    {
+    }
+
+    /**
+     * Returns Operation System Name, eg:  `Windows`.
+     * @return string
+     */
+    public static function osName(): string
+    {
+    }
+
+    /**
+     * Returns Operation System Version.
+     * @return string
+     */
+    public static function osVersion(): string
+    {
+    }
+
+    /**
+     * Add jar from file or classpath dir at runtime to runtime.
+     * --RU--
+     * Добавить jar файл или папку classpath во время выполнения.
+     *
+     * @param $file
+     */
+    public static function addClassPath($file)
     {
     }
 }
